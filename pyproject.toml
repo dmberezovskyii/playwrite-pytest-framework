@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "playwrite"
+version = "0.1.0"
+description = "A web automation framework using pytest and Playwright"
+authors = ["Dmytro Berezovskyi linkedin.com/in/dmytro-berezovskyi/"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pytest = "^8.3"
+playwright = "^1.48.0"
+dynaconf = "^3.1"
+requests = "^2.31"
+
+[tool.poetry.dev-dependencies]
+ruff = "^0.6.8"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "-v --tb=short"
+testpaths = ["tests"]
