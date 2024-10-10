@@ -1,0 +1,5 @@
+DEV:
+  name: "DEVELOPMENT"
+
+PROD:
+  name: "PRODUCTION"
