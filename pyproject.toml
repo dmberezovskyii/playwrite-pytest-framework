@@ -2,14 +2,25 @@
 name = "playwrite"
 version = "0.1.0"
 description = "A web automation framework using pytest and Playwright"
-authors = ["Dmytro Berezovskyi linkedin.com/in/dmytro-berezovskyi/"]
+authors = ["Dmytro Berezovskyi <dmberezovskyi@gmail.com>"]
+
+packages = [
+    { include = "src" },
+    { include = "tests" },
+    { include = "configs" },
+    { include = "api", from = "src" },
+    { include = "drivers", from = "src" },
+    { include = "pages", from = "src" },
+    { include = "utils", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
 pytest = "^8.3"
-playwright = "^1.48.0"
-dynaconf = "^3.1"
+playwright = "^1.47.0"
+dynaconf = "^3.2.6"
 requests = "^2.31"
+pytest-asyncio = "^0.24.0"
 
 [tool.poetry.dev-dependencies]
 ruff = "^0.6.8"
@@ -19,5 +30,20 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=short"
+addopts = "-rA -v --env=dev --browser-type=chromium --capture=no -p no:cacheprovider"
+asyncio_mode = "auto"
+markers = [
+    { name = "smoke", description = "run smoke tests" },
+    { name = "regression", description = "run regression tests" },
+    { name = "sanity", description = "run sanity tests" },
+    { name = "asyncio", description = "mark test as asyncio"}
+]
 testpaths = ["tests"]
+python_files = ["*.py"]
+python_classes = [
+    "Test*",
+    "*Test*",
+    "*Test",
+    "*Tests",
+]
+python_functions = ["test_*"]
