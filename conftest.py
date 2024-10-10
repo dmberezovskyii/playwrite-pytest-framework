@@ -38,30 +38,36 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def playwright():
+    """Initialize Playwright for the test session."""
     with sync_playwright() as p:
         yield p
 
 
 @pytest.fixture(scope="session")
 def browser(request, playwright):
+    """Create and return a browser instance based on command-line options."""
     browser_type = request.config.getoption("--browser-type")
     launch_options = get_browser_options(request)
 
-    browser = {
+    # Map the browser types to their launch functions
+    browser_launch_func = {
         "chromium": playwright.chromium.launch,
         "firefox": playwright.firefox.launch,
         "webkit": playwright.webkit.launch
     }.get(browser_type)
 
-    if browser is None:
-        raise ValueError(f"Unsupported browser type: {browser_type}")
+    if not browser_launch_func:
+        raise ValueError(f"Unsupported browser type: {browser_type}. Please choose from 'chromium', 'firefox', or 'webkit'.")
 
-    yield browser(**launch_options)
-    browser.close()
+    instance = browser_launch_func(**launch_options)
+
+    yield instance
+    instance.close()
 
 
 @pytest.fixture
 def page(browser):
+    """Create and return a new page in the browser context."""
     context = browser.new_context()
     page = context.new_page()
     yield page
@@ -72,16 +78,10 @@ def get_browser_options(request):
     """
     Returns browser launch options based on pytest command-line options.
     """
-    headless = request.config.getoption("--headless")
-    devtools = request.config.getoption("--devtools")
-    proxy = request.config.getoption("--proxy")
-
-    launch_options = {
-        "headless": headless,
-        "devtools": devtools,
+    return {
+        "headless": request.config.getoption("--headless"),
+        "devtools": request.config.getoption("--devtools"),
+        "proxy": {
+            "server": request.config.getoption("--proxy")
+        } if request.config.getoption("--proxy") else None
     }
-
-    if proxy:
-        launch_options["proxy"] = {"server": proxy}
-
-    return launch_options
