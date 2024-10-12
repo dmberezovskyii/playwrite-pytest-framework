@@ -1,6 +1,8 @@
 import pytest
 from playwright.sync_api import sync_playwright
 
+from drivers.events import EventListenerManager
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -34,6 +36,13 @@ def pytest_addoption(parser):
         default=None,
         help="Proxy server address (e.g., http://proxy-server:port)"
     )
+    # New option to select event listeners
+    parser.addoption(
+        "--listeners",
+        action="store",
+        default="",
+        help="Comma-separated event listeners (options: console, request, response, click)"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -66,10 +75,17 @@ def browser(request, playwright):
 
 
 @pytest.fixture
-def page(browser):
-    """Create and return a new page in the browser context."""
+def page(browser, request):
+    """Create and return a new page in the browser context with dynamic event listeners."""
     context = browser.new_context()
     page = context.new_page()
+
+    # Fetch selected event listeners from command-line options
+    selected_listeners = request.config.getoption("--listeners").strip().split(',')
+
+    # Create an EventListenerManager to handle the event listeners
+    EventListenerManager(page, selected_listeners)
+
     yield page
     context.close()
 
