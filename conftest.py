@@ -2,6 +2,9 @@ import pytest
 from playwright.sync_api import sync_playwright
 
 from drivers.events import EventListenerManager
+from utils.logger import Logger, LogLevel
+
+log = Logger(log_lvl=LogLevel.INFO)
 
 
 def pytest_addoption(parser):
@@ -66,7 +69,10 @@ def browser(request, playwright):
     }.get(browser_type)
 
     if not browser_launch_func:
-        raise ValueError(f"Unsupported browser type: {browser_type}. Please choose from 'chromium', 'firefox', or 'webkit'.")
+        raise ValueError(
+            f"Unsupported browser type: {browser_type}. "
+            f"Please choose from 'chromium', 'firefox', or 'webkit'."
+        )
 
     instance = browser_launch_func(**launch_options)
 
@@ -79,14 +85,13 @@ def page(browser, request):
     """Create and return a new page in the browser context with dynamic event listeners."""
     context = browser.new_context()
     page = context.new_page()
-
     # Fetch selected event listeners from command-line options
     selected_listeners = request.config.getoption("--listeners").strip().split(',')
 
-    # Create an EventListenerManager to handle the event listeners
-    EventListenerManager(page, selected_listeners)
+    listener_manager = EventListenerManager(page, selected_listeners, log)
 
     yield page
+
     context.close()
 
 
