@@ -1,12 +1,12 @@
 import pytest
 from playwright.sync_api import sync_playwright
-
 from drivers.events import EventListenerManager
 from utils.logger import Logger, LogLevel
 
 log = Logger(log_lvl=LogLevel.INFO)
 
 
+# Registering pytest options for command-line argument parsing
 def pytest_addoption(parser):
     parser.addoption(
         "--env",
@@ -39,7 +39,6 @@ def pytest_addoption(parser):
         default=None,
         help="Proxy server address (e.g., http://proxy-server:port)"
     )
-    # New option to select event listeners
     parser.addoption(
         "--listeners",
         action="store",
@@ -47,54 +46,53 @@ def pytest_addoption(parser):
         help="Comma-separated event listeners (options: console, request, response, click)"
     )
 
-
+# Initialize Playwright instance for the test session
 @pytest.fixture(scope="session")
 def playwright():
-    """Initialize Playwright for the test session."""
     with sync_playwright() as p:
         yield p
 
 
+# Browser fixture to create a browser instance with dynamic options
 @pytest.fixture(scope="session")
 def browser(request, playwright):
-    """Create and return a browser instance based on command-line options."""
     browser_type = request.config.getoption("--browser-type")
     launch_options = get_browser_options(request)
 
-    # Map the browser types to their launch functions
-    browser_launch_func = {
-        "chromium": playwright.chromium.launch,
-        "firefox": playwright.firefox.launch,
-        "webkit": playwright.webkit.launch
-    }.get(browser_type)
-
-    if not browser_launch_func:
-        raise ValueError(
-            f"Unsupported browser type: {browser_type}. "
-            f"Please choose from 'chromium', 'firefox', or 'webkit'."
+    if browser_type == "chromium":
+        args = ["--start-maximized"]
+        browser_instance = playwright.chromium.launch(
+            headless=launch_options.get("headless"),
+            args=args,
+            devtools=launch_options.get("devtools")
         )
+    else:
+        # For other browsers, launch normally
+        browser_launch_func = {
+            "firefox": playwright.firefox.launch,
+            "webkit": playwright.webkit.launch
+        }.get(browser_type)
 
-    instance = browser_launch_func(**launch_options)
+        browser_instance = browser_launch_func(**launch_options)
 
-    yield instance
-    instance.close()
+    yield browser_instance
+    browser_instance.close()
 
 
+# Page fixture to open a new page and attach listeners dynamically
 @pytest.fixture
 def page(browser, request):
-    """Create and return a new page in the browser context with dynamic event listeners."""
-    context = browser.new_context()
-    page = context.new_page()
-    # Fetch selected event listeners from command-line options
-    selected_listeners = request.config.getoption("--listeners").strip().split(',')
+    page = browser.new_page(no_viewport=True)  # no_viewport ensures no fixed size
 
-    listener_manager = EventListenerManager(page, selected_listeners, log)
+    # Fetching and attaching event listeners
+    selected_listeners = request.config.getoption("--listeners").strip().split(',')
+    EventListenerManager(page, selected_listeners, log)
 
     yield page
+    page.close()
 
-    context.close()
 
-
+# Helper function to get browser launch options
 def get_browser_options(request):
     """
     Returns browser launch options based on pytest command-line options.
