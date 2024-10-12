@@ -30,8 +30,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "-rA -v --env=dev --browser-type=chromium --capture=no -p no:cacheprovider"
-asyncio_mode = "auto"
+addopts = "-rA -v --env=dev --browser-type=chromium --listeners=events --capture=no -p no:cacheprovider"
+#asyncio_mode = "auto"
 markers = [
     { name = "smoke", description = "run smoke tests" },
     { name = "regression", description = "run regression tests" },
