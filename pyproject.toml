@@ -21,6 +21,7 @@ playwright = "^1.47.0"
 dynaconf = "^3.2.6"
 requests = "^2.31"
 pytest-asyncio = "^0.24.0"
+pytest-html = "^4.1.1"
 
 [tool.poetry.dev-dependencies]
 ruff = "^0.6.8"
@@ -30,7 +31,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "-rA -v --env=dev --browser-type=chromium --listeners=events --capture=no -p no:cacheprovider"
+addopts = "-rA -v --env=dev --browser-type=chromium --listeners=events --capture=no -p no:cacheprovider --html=../reports/test_report.html"
 #asyncio_mode = "auto"
 markers = [
     { name = "smoke", description = "run smoke tests" },

@@ -1,5 +1,7 @@
+import base64
 import pytest
 from playwright.sync_api import sync_playwright
+from config import settings
 from drivers.events import EventListenerManager
 from utils.logger import Logger, LogLevel
 
@@ -45,26 +47,39 @@ def pytest_addoption(parser):
         default="",
         help="Comma-separated event listeners (options: console, request, response, click)"
     )
+    parser.addoption(
+        "--slow-mo",
+        action="store",
+        default="0",
+        help="Slow down operations by this amount of milliseconds"
+    )
 
-# Initialize Playwright instance for the test session
+
 @pytest.fixture(scope="session")
 def playwright():
     with sync_playwright() as p:
         yield p
 
 
-# Browser fixture to create a browser instance with dynamic options
 @pytest.fixture(scope="session")
 def browser(request, playwright):
     browser_type = request.config.getoption("--browser-type")
-    launch_options = get_browser_options(request)
+
+    # Fetching options from pytest command-line arguments
+    headless = request.config.getoption("--headless")
+    slow_mo = float(request.config.getoption("--slow-mo"))  # Convert to float
+    launch_options = {
+        "headless": headless,
+        "slow_mo": slow_mo
+    }
 
     if browser_type == "chromium":
         args = ["--start-maximized"]
         browser_instance = playwright.chromium.launch(
-            headless=launch_options.get("headless"),
+            headless=launch_options["headless"],
             args=args,
-            devtools=launch_options.get("devtools")
+            slow_mo=launch_options["slow_mo"],
+            devtools=request.config.getoption("--devtools")
         )
     else:
         # For other browsers, launch normally
@@ -79,10 +94,46 @@ def browser(request, playwright):
     browser_instance.close()
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item):
+    """
+    Pytest hook to capture and embed screenshots in the HTML report when a test fails.
+    This works for both failed tests and expected failures (xfail).
+    """
+    # Retrieve the HTML plugin for embedding screenshots
+    pytest_html = item.config.pluginmanager.getplugin('html')
+    outcome = yield
+    report = outcome.get_result()
+
+    # If the pytest-html plugin is not active, skip embedding screenshots
+    if not pytest_html:
+        return
+
+    # Add screenshots for failed tests or expected failures (xfail)
+    if report.when in ('call', 'setup'):
+        xfail = hasattr(report, 'wasxfail')
+        if (report.failed or xfail) and 'page' in item.funcargs:
+            page = item.funcargs['page']
+            try:
+                # Capture screenshot as base64
+                screenshot_bytes = page.screenshot()
+                screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
+                # Embed screenshot in the HTML report
+                extra = getattr(report, 'extra', [])
+                extra.append(pytest_html.extras.image(screenshot_base64, 'Screenshot'))
+                report.extra = extra
+            except Exception as e:
+                print(f"Error capturing screenshot: {e}")
+
+
 # Page fixture to open a new page and attach listeners dynamically
 @pytest.fixture
 def page(browser, request):
-    page = browser.new_page(no_viewport=True)  # no_viewport ensures no fixed size
+    browser_context = browser.new_context(no_viewport=True)
+    browser_context.set_default_navigation_timeout(12000)
+    browser_context.set_default_timeout(6000)
+
+    page = browser.new_page(no_viewport=True)
 
     # Fetching and attaching event listeners
     selected_listeners = request.config.getoption("--listeners").strip().split(',')
@@ -92,7 +143,6 @@ def page(browser, request):
     page.close()
 
 
-# Helper function to get browser launch options
 def get_browser_options(request):
     """
     Returns browser launch options based on pytest command-line options.
