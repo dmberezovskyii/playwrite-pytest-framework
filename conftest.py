@@ -11,47 +11,44 @@ log = Logger(log_lvl=LogLevel.INFO)
 # Registering pytest options for command-line argument parsing
 def pytest_addoption(parser):
     parser.addoption(
-        "--env",
-        action="store",
-        default="dev",
-        help="Default environment"
+        "--env", action="store", default="dev", help="Default environment"
     )
     parser.addoption(
         "--browser-type",
         action="store",
         default="chromium",
         choices=["chromium", "firefox", "webkit"],
-        help="Browser type: chromium, firefox, or webkit"
+        help="Browser type: chromium, firefox, or webkit",
     )
     parser.addoption(
         "--headless",
         action="store_true",
         default=False,
-        help="Run tests in headless mode"
+        help="Run tests in headless mode",
     )
     parser.addoption(
         "--devtools",
         action="store_true",
         default=False,
-        help="Open browser with devtools"
+        help="Open browser with devtools",
     )
     parser.addoption(
         "--proxy",
         action="store",
         default=None,
-        help="Proxy server address (e.g., http://proxy-server:port)"
+        help="Proxy server address (e.g., http://proxy-server:port)",
     )
     parser.addoption(
         "--listeners",
         action="store",
         default="",
-        help="Comma-separated event listeners (options: console, request, response, click)"
+        help="Comma-separated event listeners (console, request, response, click)",
     )
     parser.addoption(
         "--slow-mo",
         action="store",
         default="0",
-        help="Slow down operations by this amount of milliseconds"
+        help="Slow down operations by this amount of milliseconds",
     )
 
 
@@ -67,11 +64,8 @@ def browser(request, playwright):
 
     # Fetching options from pytest command-line arguments
     headless = request.config.getoption("--headless")
-    slow_mo = float(request.config.getoption("--slow-mo"))  # Convert to float
-    launch_options = {
-        "headless": headless,
-        "slow_mo": slow_mo
-    }
+    slow_mo = request.config.getoption("--slow-mo")
+    launch_options = {"headless": headless, "slow_mo": slow_mo}
 
     if browser_type == "chromium":
         args = ["--start-maximized"]
@@ -79,13 +73,13 @@ def browser(request, playwright):
             headless=launch_options["headless"],
             args=args,
             slow_mo=launch_options["slow_mo"],
-            devtools=request.config.getoption("--devtools")
+            devtools=request.config.getoption("--devtools"),
         )
     else:
         # For other browsers, launch normally
         browser_launch_func = {
             "firefox": playwright.firefox.launch,
-            "webkit": playwright.webkit.launch
+            "webkit": playwright.webkit.launch,
         }.get(browser_type)
 
         browser_instance = browser_launch_func(**launch_options)
@@ -101,7 +95,7 @@ def pytest_runtest_makereport(item):
     This works for both failed tests and expected failures (xfail).
     """
     # Retrieve the HTML plugin for embedding screenshots
-    pytest_html = item.config.pluginmanager.getplugin('html')
+    pytest_html = item.config.pluginmanager.getplugin("html")
     outcome = yield
     report = outcome.get_result()
 
@@ -110,17 +104,19 @@ def pytest_runtest_makereport(item):
         return
 
     # Add screenshots for failed tests or expected failures (xfail)
-    if report.when in ('call', 'setup'):
-        xfail = hasattr(report, 'wasxfail')
-        if (report.failed or xfail) and 'page' in item.funcargs:
-            page = item.funcargs['page']
+    if report.when in ("call", "setup"):
+        xfail = hasattr(report, "wasxfail")
+        if (report.failed or xfail) and "page" in item.funcargs:
+            page = item.funcargs["page"]
             try:
                 # Capture screenshot as base64
                 screenshot_bytes = page.screenshot()
                 screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
                 # Embed screenshot in the HTML report
-                extra = getattr(report, 'extra', [])
-                extra.append(pytest_html.extras.image(screenshot_base64, 'Screenshot'))
+                extra = getattr(report, "extra", [])
+                extra.append(
+                    pytest_html.extras.image(screenshot_base64, "Screenshot")
+                )
                 report.extra = extra
             except Exception as e:
                 print(f"Error capturing screenshot: {e}")
@@ -136,7 +132,7 @@ def page(browser, request):
     page = browser.new_page(no_viewport=True)
 
     # Fetching and attaching event listeners
-    selected_listeners = request.config.getoption("--listeners").strip().split(',')
+    selected_listeners = request.config.getoption("--listeners").strip().split(",")
     EventListenerManager(page, selected_listeners, log)
 
     yield page
@@ -150,7 +146,7 @@ def get_browser_options(request):
     return {
         "headless": request.config.getoption("--headless"),
         "devtools": request.config.getoption("--devtools"),
-        "proxy": {
-            "server": request.config.getoption("--proxy")
-        } if request.config.getoption("--proxy") else None
+        "proxy": {"server": request.config.getoption("--proxy")}
+        if request.config.getoption("--proxy")
+        else None,
     }

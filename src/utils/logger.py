@@ -22,21 +22,33 @@ class Singleton(type):
 
 
 class Logger(metaclass=Singleton):
-    def __init__(self, log_lvl: LogLevel = LogLevel.INFO, log_base_directory: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        log_lvl: LogLevel = LogLevel.INFO,
+        log_base_directory: Optional[str] = None,
+    ) -> None:
         self._log = logging.getLogger("selenium")
         self._log.setLevel(LogLevel.DEBUG.value)
-        self.log_base_directory = log_base_directory or os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))  # Default to the project's root directory
+        self.log_base_directory = log_base_directory or os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../..")
+        )  # Default to the project's root directory
         self.log_file = self._create_log_file()
         self._initialize_logging(log_lvl)
 
     def _create_log_file(self) -> str:
         current_time = time.strftime("%Y-%m-%d")
-        log_directory = os.path.join(self.log_base_directory, "reports/logs")  # Build the path to reports/logs
+        log_directory = os.path.join(
+            self.log_base_directory, "reports/logs"
+        )  # Build the path to reports/logs
 
         try:
-            os.makedirs(log_directory, exist_ok=True)  # Create directory if it doesn't exist
+            os.makedirs(
+                log_directory, exist_ok=True
+            )  # Create directory if it doesn't exist
         except Exception as e:
-            raise RuntimeError(f"Failed to create log directory '{log_directory}': {e}")
+            raise RuntimeError(
+                f"Failed to create log directory '{log_directory}': {e}"
+            )
 
         return os.path.join(log_directory, f"log_{current_time}.log")
 
