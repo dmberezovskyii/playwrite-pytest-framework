@@ -7,18 +7,18 @@ class EventListenerManager:
 
     def attach_listeners(self):
         """Attach event listeners based on selected options."""
-        if 'console' in self.selected_listeners:
+        if "console" in self.selected_listeners:
             self.page.on("console", self.handle_console_log)
 
-        if 'request' in self.selected_listeners:
+        if "request" in self.selected_listeners:
             self.page.on("request", self.handle_request)
 
-        if 'response' in self.selected_listeners:
+        if "response" in self.selected_listeners:
             self.page.on("response", self.handle_response)
 
-        if 'events' in self.selected_listeners:
-            self.page.on('load', self.handle_page_load)
-            self.page.on('close', self.handle_page_close)
+        if "events" in self.selected_listeners:
+            self.page.on("load", self.handle_page_load)
+            self.page.on("close", self.handle_page_close)
 
     def handle_console_log(self, msg):
         self.logger.annotate(f"Console log: {msg.text()}", "info")
