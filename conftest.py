@@ -9,9 +9,7 @@ log = Logger(log_lvl=LogLevel.INFO)
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        "--env", action="store", default="dev", help="Default environment"
-    )
+    parser.addoption("--env", action="store", default="dev", help="Default environment")
     parser.addoption(
         "--browser-type",
         action="store",
@@ -89,8 +87,10 @@ def page(browser, request):
     navigation_timeout = request.config.getoption("--navigation-timeout", default=12000)
     default_timeout = request.config.getoption("--default-timeout", default=6000)
 
-    log.annotate(f"Creating a new browser context with timeouts: "
-                 f"{navigation_timeout}, {default_timeout}")
+    log.annotate(
+        f"Creating a new browser context with timeouts: "
+        f"{navigation_timeout}, {default_timeout}"
+    )
 
     # Create a new browser context
     browser_context = browser.new_context(no_viewport=True)
@@ -105,7 +105,7 @@ def page(browser, request):
     yield page
 
     page.close()
-    browser_context.close()  # Optional: Close the context if you want to free resources
+    # browser_context.close()  # Optional: Close the context if you want to free resources # noqa
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -134,9 +134,7 @@ def pytest_runtest_makereport(item):
                 screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
                 # Embed screenshot in the HTML report
                 extra = getattr(report, "extra", [])
-                extra.append(
-                    pytest_html.extras.image(screenshot_base64, "Screenshot")
-                )
+                extra.append(pytest_html.extras.image(screenshot_base64, "Screenshot"))
                 report.extra = extra
             except Exception as e:
                 print(f"Error capturing screenshot: {e}")
@@ -149,9 +147,7 @@ def get_browser_options(request):
     return {
         "headless": request.config.getoption("--headless"),
         "devtools": request.config.getoption("--devtools"),
-        "slow_mo": float(
-            request.config.getoption("--slow-mo")
-        ),  # Include slow_mo here
+        "slow_mo": float(request.config.getoption("--slow-mo")),
         "proxy": {"server": request.config.getoption("--proxy")}
         if request.config.getoption("--proxy")
         else None,
