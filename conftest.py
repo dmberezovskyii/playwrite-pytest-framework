@@ -8,7 +8,6 @@ from utils.logger import Logger, LogLevel
 log = Logger(log_lvl=LogLevel.INFO)
 
 
-# Registering pytest options for command-line argument parsing
 def pytest_addoption(parser):
     parser.addoption(
         "--env", action="store", default="dev", help="Default environment"
@@ -62,10 +61,7 @@ def playwright():
 def browser(request, playwright):
     browser_type = request.config.getoption("--browser-type")
 
-    # Fetching options from pytest command-line arguments
-    headless = request.config.getoption("--headless")
-    slow_mo = request.config.getoption("--slow-mo")
-    launch_options = {"headless": headless, "slow_mo": slow_mo}
+    launch_options = get_browser_options(request)
 
     if browser_type == "chromium":
         args = ["--start-maximized"]
@@ -73,10 +69,9 @@ def browser(request, playwright):
             headless=launch_options["headless"],
             args=args,
             slow_mo=launch_options["slow_mo"],
-            devtools=request.config.getoption("--devtools"),
+            devtools=launch_options["devtools"],
         )
     else:
-        # For other browsers, launch normally
         browser_launch_func = {
             "firefox": playwright.firefox.launch,
             "webkit": playwright.webkit.launch,
@@ -86,6 +81,31 @@ def browser(request, playwright):
 
     yield browser_instance
     browser_instance.close()
+
+
+@pytest.fixture
+def page(browser, request):
+    # Retrieve timeout options
+    navigation_timeout = request.config.getoption("--navigation-timeout", default=12000)
+    default_timeout = request.config.getoption("--default-timeout", default=6000)
+
+    log.annotate(f"Creating a new browser context with timeouts: "
+                 f"{navigation_timeout}, {default_timeout}")
+
+    # Create a new browser context
+    browser_context = browser.new_context(no_viewport=True)
+    browser_context.set_default_navigation_timeout(navigation_timeout)
+    browser_context.set_default_timeout(default_timeout)
+
+    # Create a new page
+    page = browser_context.new_page()
+    selected_listeners = request.config.getoption("--listeners").strip().split(",")
+    EventListenerManager(page, selected_listeners, log)
+
+    yield page
+
+    page.close()
+    browser_context.close()  # Optional: Close the context if you want to free resources
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -122,23 +142,6 @@ def pytest_runtest_makereport(item):
                 print(f"Error capturing screenshot: {e}")
 
 
-# Page fixture to open a new page and attach listeners dynamically
-@pytest.fixture
-def page(browser, request):
-    browser_context = browser.new_context(no_viewport=True)
-    browser_context.set_default_navigation_timeout(12000)
-    browser_context.set_default_timeout(6000)
-
-    page = browser.new_page(no_viewport=True)
-
-    # Fetching and attaching event listeners
-    selected_listeners = request.config.getoption("--listeners").strip().split(",")
-    EventListenerManager(page, selected_listeners, log)
-
-    yield page
-    page.close()
-
-
 def get_browser_options(request):
     """
     Returns browser launch options based on pytest command-line options.
@@ -146,6 +149,9 @@ def get_browser_options(request):
     return {
         "headless": request.config.getoption("--headless"),
         "devtools": request.config.getoption("--devtools"),
+        "slow_mo": float(
+            request.config.getoption("--slow-mo")
+        ),  # Include slow_mo here
         "proxy": {"server": request.config.getoption("--proxy")}
         if request.config.getoption("--proxy")
         else None,
