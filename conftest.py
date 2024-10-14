@@ -1,7 +1,6 @@
 import base64
 import pytest
 from playwright.sync_api import sync_playwright
-from config import settings
 from drivers.events import EventListenerManager
 from utils.logger import Logger, LogLevel
 
