@@ -82,6 +82,5 @@ The linting configuration defines rules that dictate the checks performed. Custo
    ```plaintext
    $FilePathRelativeToProjectRoot$ --config .ruff.toml
    ```
-### Demo tool https://demoqa.com/text-box
 
    
