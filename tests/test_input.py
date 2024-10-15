@@ -1,3 +1,4 @@
+from config import settings
 from pages.input_form import InputForm
 
 
@@ -8,8 +9,7 @@ class TestFillForm:
         input_form = InputForm(page)
 
         # Navigate to the input form page
-        input_form.navigate_to(
-            "https://demoqa.com/text-box")
+        input_form.navigate_to(settings.base_url)
 
         # Fill in the full name
         input_form.fill_full_name("John Doe")

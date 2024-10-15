@@ -1,5 +1,2 @@
-DEV:
-  name: "DEVELOPMENT"
-
-PROD:
-  name: "PRODUCTION"
+default:
+    base_url: "https://demoqa.com/text-box"

@@ -1,0 +1,2 @@
+prod:
+    base_url: "https://playwright.dev/"
