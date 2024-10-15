@@ -17,6 +17,7 @@ This sample framework is designed to facilitate automated testing of web applica
 - [Installation](#installation)
 - [Usage](#usage)
 - [Command Line Options](#command-line-options)
+- [Environments](#command-line-options)
 
 ## Requirements
 
@@ -45,3 +46,20 @@ The framework supports several command-line options to customize the test execut
     --proxy: Set a proxy server address (e.g., http://proxy-server:port)
     --listeners: Comma-separated list of event listeners to attach (options: console, request, response, click)
     --slow-mo: Slow down operations by the specified milliseconds (default: 0)
+
+## Environments
+We utilize Dynaconf for settings management. Dynaconf is a powerful and flexible tool that supports multiple file formats (TOML, YAML, JSON, INI, and Python). It allows for easy management of multi-environment configurations and supports environment variables to override existing settings, including support for .env files.
+
+   --The settings are defined in the config.py file.
+   --To switch between environments, set the variable ENV_FOR_PW in your .env file. For example, to use the development environment, set:
+   ```
+      ENV_FOR_PW=dev
+   ```
+   --Provided three possible environments:
+
+- **`dev.yaml`**: Configuration for the development environment.
+- **`prod.yaml`**: Configuration for the production environment.
+- **`settings.yaml`**: Default configuration if `ENV_FOR_PW=dev` is not specified.
+
+
+   
