@@ -2,7 +2,6 @@ from playwright.sync_api import Page
 
 from base_page import BasePage
 from locators.input_locators import InputLocators
-from utils.logger import log
 
 
 class InputForm(BasePage):
