@@ -1,3 +1,5 @@
+from typing import Literal
+
 from playwright.sync_api import Page
 from utils.logger import log
 
@@ -12,6 +14,15 @@ class BasePage:
         self.page.goto(url)
 
     @log()
+    def reload_page(
+        self,
+        state: Literal["commit", "domcontentloaded", "networkidle", "load"] = "networkidle", # noqa
+        timeout: float = 10000,
+    ):
+        """Reload page"""
+        self.page.reload(timeout=timeout, wait_until=state)
+
+    @log()
     def click(self, selector: str):
         """Click an element by selector."""
         self.wait_for_selector(selector)
@@ -20,7 +31,6 @@ class BasePage:
     @log()
     def fill(self, selector: str, value: str):
         """Fill an input field with a specified value."""
-        self.wait_for_selector(selector)
         self.page.locator(selector).fill(value)
 
     @log()
