@@ -18,6 +18,7 @@ This sample framework is designed to facilitate automated testing of web applica
 - [Usage](#usage)
 - [Command Line Options](#command-line-options)
 - [Environments](#command-line-options)
+- [Linting](#linting)
 
 ## Requirements
 
@@ -62,5 +63,25 @@ It allows for easy management of multi-environment configurations and supports e
   - **`prod.yaml`**: Configuration for the production environment.
   - **`settings.yaml`**: Default configuration if `ENV_FOR_PW=dev` is not specified.
 
+## Linting
+### Local: Ruff Lint Configuration
+
+The linting configuration defines rules that dictate the checks performed. Customize these rules to suit your project's coding style and requirements.
+
+1. Create external tools to run linting.
+2. Set the working directory to:
+   ```plaintext
+   $ProjectFileDir$
+   ```
+3. Specify the program:
+   ```plaintext
+   path to your ruff installed /bin/ruff 
+   example/Users/.../Library/Caches/pypoetry/virtualenvs/playwrite-OiGSFyl3-py3.12/bin/ruff
+   ```
+4. Provide the arguments:
+   ```plaintext
+   $FilePathRelativeToProjectRoot$ --config .ruff.toml
+   ```
+### Demo tool https://demoqa.com/text-box
 
    
